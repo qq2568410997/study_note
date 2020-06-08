@@ -1321,10 +1321,226 @@ export const get_user = ()=>{
 	+ cnpm install --save-dev redux-devtools-extension
 [文档](https://github.com/zalmoxisus/redux-devtools-extension)
 # 0601React 进阶 组件优化1
+1. 在组件销毁前要作相应的回收处理
+	+ 定时器---> 关闭定时器
+	+ 网络请求
+```
+### Parent.jsx
+import React, { Component } from 'react'
+
+const MyApi = {
+    count: 0,
+    subscribe(cb){
+        this.intervalId = setInterval(() => {
+            this.count += 1
+            cb(this.count)
+        }, 1000);
+    },
+    unsubscribe(){
+        clearInterval(this.intervalId)
+        this.reset()
+    },
+    reset(){
+        this.count = 0
+    }
+}
+
+export class Parent extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            count: 0
+        }
+    }
+    componentDidMount(){
+        MyApi.subscribe((currentCount)=>{
+            this.setState({
+                count: currentCount
+            })
+        })
+    }
+    componentWillUnmount(){
+        MyApi.unsubscribe()
+    }
+    render() {
+        return (
+            <div>
+                Parent: {this.state.count}
+            </div>
+        )
+    }
+}
+
+export default Parent
+
+
+### Home.jsx
+import React, { Component } from 'react'
+
+export class Home extends Component {
+    render() {
+        return (
+            <div>
+                Home
+            </div>
+        )
+    }
+}
+
+export default Home
+
+
+### App.js
+import React from 'react';
+import Parent from './components/demo1/Parent'
+import Home from './Home'
+import {
+  HashRouter,
+  Switch,
+  Route
+} from "react-router-dom";
+
+function App() {
+  return (
+    <HashRouter>
+      <Switch>
+        <Route exact path='/' component={Home}></Route>
+        <Route path='/demo1' component={Parent}></Route>
+      </Switch>
+    </HashRouter>
+  );
+}
+
+export default App;
+
+```
 # 0602React 进阶 组件优化2
+1. 组件是否要反复渲染(应该做到数据变化就渲染，不变化不渲染，节省渲染消耗)
+**使用组件的生命周期函数进行渲染的控制**
+```
+### Child1.jsx
+import React, { Component } from 'react'
+
+export class Child1 extends Component {
+
+    shouldComponentUpdate(nextProps, nextState){
+        if(nextProps.num === this.props.num){
+            return false
+        }else{
+            return true
+        }
+    }
+
+    render() {
+        console.log('Child1->render');
+        console.log(this.props);
+        
+        return (
+            <div>
+                Child1: {this.props.num}
+            </div>
+        )
+    }
+}
+
+export default Child1
+```
 # 0603React 进阶 组件优化3
+1. 使用PureComponent处理数据层的比较(浅比较)--->Component则不会对数据层进行比较
+```
+### Child2.jsx
+import React, { PureComponent } from 'react'
+
+export class Child2 extends PureComponent {
+    render() {
+        return (
+            <div>
+                Child2: {this.props.num}
+            </div>
+        )
+    }
+}
+
+export default Child2
+
+
+```
 # 0604React 进阶 Fragment
+1. 占位元素(可以直接使用空标签，官方建议使用Fragment)
+```
+import React, { Component,Fragment } from 'react'
+
+const Item = ()=>{
+    return (
+        <Fragment>
+            <li>Item1</li>
+            <li>Item2</li>
+        </Fragment>
+    )
+}
+
+export class UlDemo extends Component {
+    render() {
+        return (
+            <ul>
+                <Item/>
+            </ul>
+        )
+    }
+}
+
+export default UlDemo
+
+```
 # 0605React 进阶 Context
+1. 上下文管理器的使用(一个简单的应用场景就是路由history的跳转)
+	+ this.props.history.push("/") 只能作用于路由的直接子元素，不能在孙子元素中使用
+	+ 此时可以使用高阶组件withRouter装饰，还可以使用上下文管理器进行值传递
+```
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+
+
+const Child = (props)=>{
+    return (
+        <Comment/>
+    )
+}
+
+const Comment = (props, context)=>{
+    return (
+        <div>
+            Color: {context.color}
+        </div>
+    )
+}
+
+export class ContextDemo extends Component {
+    getChildContext(){
+        return {
+            color: 'Blue'
+        }
+    }
+    render() {
+        return (
+            <div>
+                <Child/>
+            </div>
+        )
+    }
+}
+
+Comment.contextTypes = {
+    color: PropTypes.string
+}
+ContextDemo.childContextTypes = {
+    color: PropTypes.string
+}
+
+
+export default ContextDemo
+
+```
 # 0606React 进阶 高阶组件
 # 0607React 进阶 高阶组件应用
 # 0608React 进阶 错误边界处理
