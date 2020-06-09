@@ -1542,8 +1542,198 @@ export default ContextDemo
 
 ```
 # 0606React 进阶 高阶组件
+1. 以组件作为参数，返回值还是一个组件
+```
+import React, { Component } from 'react'
+
+
+const withFetch = (ChildComponent)=>{
+    return class extends Component{
+        render(){
+            return (
+                <ChildComponent {...this.props} />
+            )
+        }
+    }
+}
+
+class MyData extends Component{
+    render(){
+        return(
+            <div>
+                MyData: {this.props.data}
+            </div>
+        )
+    }
+}
+
+const WithFetch = withFetch(MyData)
+
+
+export class HighComponent extends Component {
+    render() {
+        return (
+            <div>
+                <WithFetch data="Hello High Component" />
+            </div>
+        )
+    }
+}
+
+export default HighComponent
+
+```
 # 0607React 进阶 高阶组件应用
+1. 封装高阶组件---- 网络请求
+```
+### withFetch.jsx
+import React, { Component } from 'react'
+
+const withFetch= (url) =>(View)=>{
+    return class extends Component{
+        constructor(props){
+            super(props)
+            this.state = {
+                data: null,
+                loading: true
+            }
+        }
+        componentDidMount(){
+            fetch(url)
+            .then(data=>data.json())
+            .then(data=>{
+                this.setState({
+                    loading: false,
+                    data: data
+                })
+            })
+        }
+        render(){
+            if(this.state.loading){
+                return(
+                    <div>loading...</div>
+                )
+            }else{
+                return(
+                    <View data={this.state.data}/>
+                )
+            }
+        }
+    }
+}
+
+export default withFetch
+
+
+
+### 组件参数 NewBanner.jsx
+import withFetch from './withFetch'
+
+import React, { Component } from 'react'
+
+const NewBanner = withFetch('http://iwenwiki.com/api/blueberrypai/getIndexBanner.php')((props)=>{
+    return(
+        <div>
+           <h3>{props.data.banner[1].title}</h3>
+        </div>
+    )
+})
+
+export default NewBanner
+
+```
 # 0608React 进阶 错误边界处理
+1. 为什么需要错误处理边界
+	+ 不能因为一个未知的错误就导致整个页面崩溃
+	+ 利用componentDidCatch()来捕获子元素的错误信息(即子元素发生错误时触发)
+2. 如何使用
+	+ 用错误边界组件来包裹可能会发生错误或者异常的组件
+```
+### ErrorBoundary.jsx
+import React, { Component } from 'react'
+
+export class EroorBoundary extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            hasError: false,
+            error: null,
+            errorInfo: null
+        }
+    }
+    componentDidCatch(error, errorInfo){
+        this.setState({
+            hasError: true,
+            error: error,
+            errorInfo: errorInfo
+        })
+    }
+    render() {
+        if(this.state.hasError){
+            return (
+            <div>{this.props.render(this.state.error, this.state.errorInfo)}</div>
+            )
+        }else{
+            return this.props.children
+        }
+    }
+}
+
+export default EroorBoundary
+
+
+### Errors.jsx
+import React, { Component } from 'react'
+
+export class Errors extends Component {
+    render() {
+        return (
+            <ul>
+                {
+                    null.map((ele, index)=>{
+                        return <li key={index}>{ele}</li>
+                     })
+                }
+            </ul>
+        )
+    }
+}
+
+export default Errors
+
+
+### Parent.jsx
+import React, { Component } from 'react'
+import EroorBoundary from './EroorBoundary'
+import Errors from './Errors'
+
+
+export class Parent extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            count: 0
+        }
+    }
+    render() {
+
+        return (
+            <div>
+                <p>{this.state.count}</p>
+                <EroorBoundary render={(error, errorInfo)=><p>{'组件发生错误了'}</p>}>
+                    <Errors/>
+                </EroorBoundary>
+               
+                <button onClick={()=>{this.setState({count: this.state.count+1})}}>increment</button>
+                <button onClick={()=>{this.setState({count: this.state.count-1})}}>decrement</button>
+            </div>
+        )
+    }
+}
+
+export default Parent
+
+```
 
 
 
