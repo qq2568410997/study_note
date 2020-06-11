@@ -1647,7 +1647,7 @@ export default NewBanner
 	+ 不能因为一个未知的错误就导致整个页面崩溃
 	+ 利用componentDidCatch()来捕获子元素的错误信息(即子元素发生错误时触发)
 2. 如何使用
-	+ 用错误边界组件来包裹可能会发生错误或者异常的组件
+	+ 用错误边界组件来包裹可能会发生错误或异常的组件
 ```
 ### ErrorBoundary.jsx
 import React, { Component } from 'react'
@@ -1734,6 +1734,674 @@ export class Parent extends Component {
 export default Parent
 
 ```
+# 0701React&Redux 登录注册认证系统课程介绍
+1. 综合之前所学实现登陆注册功能
+# 0702React&Redux 搭建前端环境
+1. npx create-react-app redux-login-stage1-env
+2. 安装依赖
+	+ redux  react-redux       状态管理
+	+ redux-logger             日志管理
+	+ redux-devtools-extension 开发扩展
+	+ redux-thunk              异步操作库
+# 0703React&Redux 搭建后端环境
+1. 在当前文件夹下创建server文件夹作为后端项目
+	+ npm init
+2. 使用express或者koa2
+	+ cnpm install express/koa2
+3. 使用express的路由系统
+```
+### index.js
+const express = require('express')
+const app = express()
+const users = require('./routes/users')
+const port = 3030
+
+app.use('/api/user', users)
+
+
+app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+
+
+### router.js
+const express = require('express')
+const router = express.Router()
+
+
+router.get('/', (req, res) => res.send({
+    msg: 'Hello'
+}))
+
+module.exports = router
+```
+4. 使用nodemon监控自动更新
+	+ 安装 cnpm install -g  nodemon
+	+ 配置nodemon [官方文档](https://github.com/remy/nodemon)
+		1. 在项目目录下创建nodemon.json文件
+```
+{
+	"restartable": "rs",
+	"ignore": [
+		".git",
+		".svn",
+		"node_modules/**/node_modules"
+	],
+	"verbose": true,
+	"execMap": {
+		"js": "node --harmony"
+	},
+	"watch": [
+		
+	],
+	"env": {
+		"NODE_ENV": "development"
+	},
+	"ext": "js json"
+}
+
+### 解析
+	+ restartable  设置重启模式
+	+ ignore       设置忽略文件
+	+ verbose      设置日志输出模式，true为详细模式
+	+ execMap      设置运行服务的后缀名与对应的命令
+		1. "js": "node --harmony"  表示用nodemon代替node
+	+ watch        设置要监听哪些文件的变化，变化的时候自动重启
+	+ ext          设置需要监控的文件后缀
+```
+5. 使用nodemon.json后报错的解决方案
+```
+## nodemon : 无法加载文件 C:\Users\Ricky\AppData\Roaming\npm\nodemon.ps1，因为在此系统上禁止运行脚本
+
+1.管理员身份打开powerShell
+
+2.输入set-ExecutionPolicy RemoteSigned  
+```
+# 0704React&Redux 页面与路由搭建
+1. 安装 react-router-dom  cnpm install --save react-router-dom
+# 0705React&Redux 实现注册页面
+```
+### SignUpPage.jsx
+import React, { Component } from 'react'
+import SignUpForm from './SignUpForm'
+import { connect } from 'react-redux'
+import * as signUpActions from '../../actions/signUpActions'
+import {bindActionCreators} from 'redux'
+
+
+export class SignUpPage extends Component {
+    render() {
+        return (
+            <SignUpForm signActions={this.props.signActions}/>
+        )
+    }
+}
+
+const mapDispatchToProps = (dispatch)=>{
+    return {
+        signActions: bindActionCreators(signUpActions, dispatch)
+    }
+}
+
+
+export default connect(null, mapDispatchToProps)(SignUpPage)
+
+### SignUpForm.jsx
+import React, { Component } from 'react'
+
+export class SignUpForm extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            username: null,
+            email: null,
+            password: null,
+            passwordConfirm: null
+        }
+    }
+    inputChange = (e)=>{
+        this.setState({
+            [e.target.name]: e.target.value
+        })
+    }
+    submit = (e)=>{
+        e.preventDefault()
+        console.log(this.state);
+        this.props.signActions.userSignUpRequest(this.state)
+    }
+    render() {
+        return (
+            <form onSubmit={this.submit}>
+                <div className="form-group">
+                    <label className="form-label">username</label>
+                    <input type="text" onChange={this.inputChange} className="form-control" id="username" name="username" aria-describedby="emailHelp" />  
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Email</label>
+                    <input type="email" onChange={this.inputChange} className="form-control" id="email" name="email" aria-describedby="emailHelp" />  
+                </div>
+                <div className="form-group">
+                    <label className="form-label">password</label>
+                    <input type="password" onChange={this.inputChange} className="form-control" id="password" name="password" aria-describedby="emailHelp" />  
+                </div>
+                <div className="form-group">
+                    <label className="form-label">passwordConfirm</label>
+                    <input type="password" onChange={this.inputChange}  className="form-control" id="passwordConfirm" name="passwordConfirm" aria-describedby="emailHelp" />  
+                </div>
+                <button type="submit" className="btn btn-primary btn-lg">Register</button>
+            </form>
+        )
+    }
+}
+
+export default SignUpForm
+
+```
+# 0706React&Redux 使用axios发送请求
+1. 首先安装 axios库  cnpm install --save axios
+```
+import axios from 'axios'
+
+### 异步操作
+export const userSignUpRequest = (userData)=>{
+    return dispatch=>{
+        axios.post('http://localhost/api/user/register', userData)
+    }
+}
+
+
+```
+# 0707React&Redux 后端验证数据
+1. 安装一个工具库和一个验证库 cnpm install --save lodash validator
+	+ lodash       工具库
+	+ validator    验证库
+2. API传递的数据在后端通过req.body接收，前提是配置body-parser，否则接收不到数据
+```
+const BodyParser = require('body-parser')
+app.use('/api/user/register', users)
+```
+# 0708React&Redux 前端显示表单验证错误
+1. 使用第三方库 classnames
+```
+ {errors.email && <span className='form-text text-muted'>{errors.email}</span>}
+```
+# 0709React&Redux 补充事件点击bug
+1. 节流和防抖  回流和重绘
+2. 使用isLoading来节流和防抖
+```
+### js方法
+submit = (e)=>{
+	e.preventDefault()
+	this.setState({
+		isLoading: true
+	})
+	this.props.signActions.userSignUpRequest(this.state)
+	.then(
+		(res)=>{console.log("ok", res)},
+		({response})=>{
+			console.log("errors", response);
+			this.setState({
+				isLoading: false,
+				errors: response.data
+			})
+		}
+	)
+}
+
+### 视图展示
+<button type="submit" disabled={this.state.isLoading} className="btn btn-primary btn-lg">Register</button>
+
+```
+# 0710React&Redux 路由跳转实现
+1. 使用参数传递从父组件得到histrory
+```
+<SignUpForm signActions={this.props.signActions} history={this.props.history}/>
+```
+2. 使用高阶组件 withRouter包裹子元素
+```
+import {withRouter} from 'react-router-dom'
+export default withRouter(SignUpForm)
+```
+# 0711React&Redux 登录成功失败消息提示
+1. 安装shortid库 随机生成id
+	+ cnpm install --save shortid
+2. 封装flashMessagesList组件
+```
+### FlashMessagesList.jsx
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import FlashMessage from './FlashMessage'
+import {deleteFlashMessage} from '../../actions/flash'
+
+
+export class FlashMessagesList extends Component {
+    render() {
+        const messages = this.props.messages.map(message=>{
+            return <FlashMessage key={message.id}  message = {message} deleteFlashMessage={this.props.deleteFlashMessage}/>
+        })
+        return (
+            <div className='container'>
+                {messages}
+            </div>
+        )
+    }
+}
+
+const mapStateToProps = (state) => ({
+    messages: state.flash
+})
+
+
+
+
+export default connect(mapStateToProps, {deleteFlashMessage})(FlashMessagesList)
+
+
+
+### FlashMessage.jsx
+
+import React, { Component } from 'react'
+import classnames from 'classnames'
+
+export class FlashMessag extends Component {
+    onClick = ()=>{
+        console.log(this.props);
+        
+        this.props.deleteFlashMessage(this.props.message.id)
+    }
+
+    render() {
+        const {type, text} = this.props.message
+        return (
+            <div className={classnames('alert', {
+                'alert-success': type === 'success',
+                'alert-danger': type === 'danger'
+            })}>
+                <button onClick={this.onClick} className='close'>&times;</button>
+                {text}
+            </div>
+        )
+    }
+}
+
+export default FlashMessag
+
+
+### actions/flash.js
+import {ADD_FLASH_MESSAGE, DELETE_FLASH_MESSAGE} from '../contains'
+
+
+export const addFlashMessage = (message)=>{
+    return {
+        type: ADD_FLASH_MESSAGE,
+        message
+    }
+}
+
+export const deleteFlashMessage = (id)=>{
+    return {
+        type: DELETE_FLASH_MESSAGE,
+        id
+    }
+}
+
+
+### reducers/flash.js
+import {ADD_FLASH_MESSAGE, DELETE_FLASH_MESSAGE} from '../contains'
+import shortid from 'shortid'
+import findIndex from 'lodash/findIndex'
+
+
+const flash = (state=[], action)=>{
+    switch (action.type) {
+        case ADD_FLASH_MESSAGE:
+            return [
+                ...state,
+                {
+                    id: shortid.generate(),
+                    type: action.message.type,
+                    text: action.message.text
+
+                }
+            ]
+        case DELETE_FLASH_MESSAGE:
+            const index = findIndex(state, {id: action.id})
+            if(index !== -1){
+                return [
+                    ...state.slice(0,index),
+                    ...state.slice(index+1)
+                ]
+            }
+            return state
+        default:
+            return state;
+    }
+}
+
+export default flash
+```
+3. actions传递的简写形式
+```
+export default connect(mapStateToProps, {deleteFlashMessage})(FlashMessagesList)
+```
+# 0712React&Redux 删除消息提示
+```
+### actions/flash.js
+
+export const deleteFlashMessage = (id)=>{
+    return {
+        type: DELETE_FLASH_MESSAGE,
+        id
+    }
+}
+
+### reducers/flash.js
+case DELETE_FLASH_MESSAGE:
+	const index = findIndex(state, {id: action.id})
+	if(index !== -1){
+		return [
+			...state.slice(0,index),
+			...state.slice(index+1)
+		]
+	}
+	return state
+```
+# 0713React&Redux MYSQL数据库环境搭建
+1. 安装mysql  cnpm install --save mysql
+2. 本地配置Mysql服务器
+# 0714React&Redux 数据库与后台交互
+```
+const client = require('mysql')
+
+
+const conn = client.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'wbj2568410997',
+    port: 3306,
+    database: 'react'
+})
+
+
+
+const sqlQuery = (sql, arr, cb)=>{
+    conn.query(sql, arr, (error, result)=>{
+        if(error){
+            console.log(new Error(error));
+            return
+        }
+        cb(result)
+    })
+}
+
+module.exports = sqlQuery
+```
+# 0715React&Redux 客户端唯一性验证
+```
+const express = require('express')
+const isEmpty = require('lodash/isEmpty')
+const sqlQuery = require('../utils/mysqlFn')
+const validator = require('validator')
+const router = express.Router()
+
+const validatInput = (data)=>{
+    let errors = {}
+    console.log('validator.isEmpty(data.username)', validator.isEmpty(data.username));
+
+    
+    if(validator.isEmpty(data.username)){
+        errors.username = '请输入用户名'
+    }
+    if(!validator.isEmail(data.email)){
+        
+        
+        errors.email = '请输入正确的邮箱地址'
+    }
+    if(validator.isEmpty(data.password)){
+        errors.password = '请输入密码'
+    }
+    if(validator.isEmpty(data.passwordConfirm)){
+        errors.passwordConfirm = '请确认密码'
+    }
+    if(!validator.equals(data.password, data.passwordConfirm)){
+        errors.passwordConfirm = '两次密码输入不同，请重新输入'
+    }
+    return {
+        errors,
+        isValid: isEmpty(errors)
+    }
+}
+
+
+router.post('/register', (req, res) => {
+    console.log(req.body);
+    const {errors, isValid} = validatInput(req.body)
+    if(isValid){
+        const arr = [req.body.email, req.body.username, req.body.password]
+        console.log('arr',arr)
+        const sql = "insert into user(email,username,password) values(?,?,?)"
+        sqlQuery(sql, arr, (data)=>{
+            // console.log('data', data);
+            
+            if(data.affectedRows){
+                res.status(200).json({msg:'ok'})
+            }else{
+                res.status(400).json({error:'注册失败'})
+            }
+        })
+       
+    }else{
+        
+        res.status(400).json(errors)
+    }
+})
+
+router.post('/:username', (req, res)=>{
+    const sql = "select * from user where `username`=?"
+    const arr = [req.params.username]
+    sqlQuery(sql, arr, (data)=>{
+        console.log('data', data);
+        let msg = null
+        if(data.length>0){
+            res.status(401).json({msg:'用户名已存在'})
+        }else{
+            res.send({msg:'ok'})
+        }
+        
+    })
+})
+
+module.exports = router
+
+```
+# 0716React&Redux 实现登录页面与功能
+```
+### LoginPage.jsx
+import React, { Component } from 'react'
+import LoginForm from './LoginForm'
+
+export class LoginPage extends Component {
+    render() {
+        return (
+            <div className='row'>
+                <div className='col-md-3'></div>
+                <div className='col-md-6'>
+                    <LoginForm/>
+                </div>
+                <div className='col-md-3'></div>
+            </div>
+        )
+    }
+}
+
+export default LoginPage
+
+
+### LoginForm.jsx
+import React, { Component } from 'react'
+import classnames from 'classnames'
+import isEmpty from 'lodash/isEmpty'
+import validator from 'validator'
+import {withRouter} from 'react-router-dom'
+import { connect } from 'react-redux'
+import * as loginActions from '../../actions/login'
+import * as messageActions from '../../actions/flash'
+import {bindActionCreators} from 'redux'
+
+
+
+export class LoginForm extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            username: '',
+            password: '',
+            errors: {},
+            isLoading: false
+        }
+    }
+    inputChange = (e)=>{
+        this.setState({
+            [e.target.name]: e.target.value
+        })
+    }
+    inputValidator = ()=>{
+        const {username, password} = this.state
+        let errors = {}
+        if(validator.isEmpty(username)){
+            errors.username = '用户名不能为空'
+        }
+        if(validator.isEmpty(password)){
+            errors.password = '密码不能为空'
+        }
+       
+        return {
+            errors,
+            isValid: isEmpty(errors)
+        }
+    }
+    submit = (e)=>{
+        e.preventDefault()
+        const {errors, isValid} = this.inputValidator()
+        if(!isValid){
+            this.setState({
+                errors
+            })
+        }else{
+            this.setState({
+                isLoading: true
+            })
+            this.props.loginActions.login(this.state)
+            .then(
+                (res)=>{
+                    console.log("ok", res)
+                    // this.props.messageActions.addFlashMessage({
+                    //     type: 'success',
+                    //     text: '注册成功, 欢迎加入我们!'
+                    // })
+                    this.props.history.push('/')
+                },
+                (err)=>{
+                    console.log("errors", err);
+                    this.setState({
+                        isLoading: false
+                    })
+                    this.props.messageActions.addFlashMessage({
+                        type: 'danger',
+                        text: err.response.data.msg
+                    })
+                }
+            )
+        }
+          
+    }
+    render() {
+        const {errors, isLoading} = this.state
+
+        
+        return (
+            <form onSubmit={this.submit}>
+                <div className="form-group">
+                    <label className="form-label">username</label>
+                    <input onBlur={this.onBlur} type="text" onChange={this.inputChange} className={classnames("form-control", {'is-invalid': errors.username})} id="username" name="username" aria-describedby="emailHelp" />  
+                     {errors.username && <span className='form-text text-muted'>{errors.username}</span>}
+                </div>
+              
+                <div className="form-group">
+                    <label className="form-label">password</label>
+                    <input type="password" onChange={this.inputChange} className={classnames("form-control", {'is-invalid': errors.password})} id="password" name="password" aria-describedby="passwordHelpInline" />  
+                    {errors.password && <span className='form-text text-muted'>{errors.password}</span>}
+                </div>
+               
+                <button type="submit" disabled={isLoading} className="btn btn-primary btn-lg">登陆</button>
+            </form>
+        )
+    }
+}
+
+
+
+const mapDispatchToProps = (dispatch)=>{
+    return {
+        loginActions: bindActionCreators(loginActions, dispatch),
+        messageActions: bindActionCreators(messageActions, dispatch)
+    }
+}
+
+
+export default withRouter(connect(null, mapDispatchToProps)(LoginForm))
+
+
+
+### actions/login.js
+import axios from 'axios'
+
+
+
+export const login = (userData)=>{
+    return dispatch=>{
+        return axios.post('/api/auth', userData)
+    }
+}
+```
+# 0717React&Redux 实现登录验证
+```
+### routes/auth.js
+const express = require('express')
+const sqlQuery = require('../utils/mysqlFn')
+const router = express.Router()
+
+
+
+
+router.post('/', (req, res) => {
+    const arr = [req.body.username, req.body.password]
+    console.log('arr',arr)
+    const sql = "select * from user where `username`=? and `password`=?"
+    sqlQuery(sql, arr, (data)=>{
+        // console.log('data', data);
+        if(data.length>0){
+            res.status(200).json({msg:'ok'})
+        }else{
+            res.status(401).json({msg:'账户或密码错误'})
+        }
+    })
+})
+
+module.exports = router
+
+```
+# 0718React&Redux JWT介绍
+1. json web token
+[阮一峰](http://www.ruanyifeng.com/blog/2018/07/json_web_token-tutorial.html)
+2. 安装相关库  
+	+ 加签 cnpm install --save jsonwebtoken
+	+ 解签 cnpm install --save jwt-decode
+# 0719React&Redux 服务器端响应jwt给浏览器
+
+# 0720React&Redux jwt保存本地与设置axios请求头
+# 0721React&Redux 本地数据token保存至redux中
+# 0722React&Redux 登录注册与登出
+# 0723React&Redux 高阶组件实现页面访问许可
+
 
 
 
