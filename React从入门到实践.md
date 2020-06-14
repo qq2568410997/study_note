@@ -1,3 +1,6 @@
+# 引言
+## 查看github源代码所必备的插件
+[五大必备插件](http://www.cnplugins.com/zhuanti/266406.html)
 # 0101React 学习前期准备
 1. 所需知识栈
 	+ JavaScript
@@ -2396,11 +2399,1128 @@ module.exports = router
 	+ 加签 cnpm install --save jsonwebtoken
 	+ 解签 cnpm install --save jwt-decode
 # 0719React&Redux 服务器端响应jwt给浏览器
+```
+### server/routes/auth.js
+const express = require('express')
+const sqlQuery = require('../utils/mysqlFn')
+const jwt = require('jsonwebtoken')
+const {jwtSecret} = require('../conf/secure.config')
+const router = express.Router()
 
+
+
+
+router.post('/', (req, res) => {
+    const arr = [req.body.username, req.body.password]
+    console.log('arr',arr)
+    const sql = "select * from user where `username`=? and `password`=?"
+    sqlQuery(sql, arr, (data)=>{
+        // console.log('data', data);
+        if(data.length>0){
+            res.send({
+                token: jwt.sign({
+                    id: data[0].id,
+                    username: data[0].username
+                }, jwtSecret)
+            })
+        }else{
+            res.status(401).json({msg:'账户或密码错误'})
+        }
+    })
+})
+
+module.exports = router
+
+```
 # 0720React&Redux jwt保存本地与设置axios请求头
+```
+### actions/login.js
+import axios from 'axios'
+import {SET_CURRENT_USER_BY_TOKEN, DELETE_CURRENT_USER} from '../contains'
+import {setAxisHeaders} from '../utils/headers'
+
+import JwtDecode from 'jwt-decode'
+
+
+export const setCurrentUser = (user)=>{
+    return {
+        type: SET_CURRENT_USER_BY_TOKEN,
+        user
+    }
+}
+
+export const deleteCurrentUser = (user)=>{
+    return {
+        type: DELETE_CURRENT_USER,
+        user
+    }
+}
+
+export const logout = ()=>{
+    return dispatch=>{
+        localStorage.removeItem('token')
+        setAxisHeaders(false)
+        dispatch(deleteCurrentUser({}))
+    }
+}
+
+export const login = (userData)=>{
+    return dispatch=>{
+        return axios.post('/api/auth', userData)
+        .then(res=>{
+            const token = res.data.token
+            console.log('Authorization', token);
+            
+            localStorage.setItem('token', token)
+            setAxisHeaders(token)
+            const user = JwtDecode(token)
+            dispatch(setCurrentUser(user))
+        })
+    }
+}
+
+### utils/headers.js
+import axios from 'axios'
+
+export const setAxisHeaders = (token)=>{
+    if(token){
+        axios.defaults.headers.common["Authorization"] = `react ${token}`
+    }else{
+        delete axios.defaults.headers.common["Authorization"]
+    }
+}
+
+
+
+```
 # 0721React&Redux 本地数据token保存至redux中
+```
+### reducer/auth.js
+import {SET_CURRENT_USER_BY_TOKEN, DELETE_CURRENT_USER} from '../contains'
+
+const initState = {
+    isAuthorized: false,
+    user: {}
+}
+
+const auth = (state=initState, action)=>{
+    switch (action.type) {
+        case SET_CURRENT_USER_BY_TOKEN:
+            if(action.user){
+                return {...state, isAuthorized: true, user: action.user}
+            }
+            return state
+        case DELETE_CURRENT_USER:
+            return {...state, isAuthorized: false, user: action.user}
+        default:
+            return state;
+    }
+}
+
+export default auth
+```
 # 0722React&Redux 登录注册与登出
+```
+### NavigationBar.jsx
+const userLinks = (
+	<li className="nav-item active">
+		<a className="nav-link" onClick={this.onClick} href='/'>登出 </a>
+	</li>
+)
+const guestLinks = (
+	<Fragment>
+		<li className="nav-item active">
+			<Link className="nav-link" to="/signup">注册 </Link>
+		</li>
+		<li className="nav-item active">
+			<Link className="nav-link" to="/login">登陆 </Link>
+		</li>
+	</Fragment>
+
+)
+```
 # 0723React&Redux 高阶组件实现页面访问许可
+```
+### utils/requireAuthenticate.js
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import {withRouter} from 'react-router-dom'
+import {addFlashMessage} from '../actions/flash'
+
+export default function (ComposeComponent) {
+   class requireAuthenticate extends Component {
+       componentWillMount(){
+           console.log('requireAuthenticate', this.props.auth);
+           
+           if(!this.props.auth.isAuthorized){
+               this.props.addFlashMessage({
+                   type: 'danger',
+                   text: '请先登陆'
+               })
+               this.props.history.push('/login')
+           }
+           
+       }
+       componentWillUpdate(nextProps){
+        if(!nextProps.auth.isAuthorized){
+            nextProps.addFlashMessage({
+                type: 'danger',
+                text: '请先登陆'
+            })
+        }
+        this.props.history.push('/login')
+       }
+        render() {
+            return (
+                <div>
+                    <ComposeComponent {...this.props} />
+                </div>
+            )
+        }
+    }
+
+    const mapStateToProps = (state) => ({
+        auth: state.auth
+    })
+
+
+    
+    return  withRouter(connect(mapStateToProps, {addFlashMessage})(requireAuthenticate))
+}
+```
+# 0801React-GoodLive-项目介绍
+# 0802React-GoodLive-蓝湖工具
+[官方地址](https://lanhuapp.com/)
+
+# 0803React-GoodsLive-Home-环境搭建
+1. 配置less
+	+ 先将webpack配置文件拉取出来  npm run eject
+	+ 搜索sass配置信息，将其改为less，则项目便会支持less
+
+# 0804React-GoodsLive-Home-路由配置
+
+# 0805React-GoodsLive-Home-底部导航
+
+# 0806React-GoodsLive-Home-HomeHeader
+
+# 0807React-GoodsLive-Home-轮播图
+
+# 0808React-GoodsLive-Home-服务器端搭建
+
+# 0809React-GoodsLive-Home-视图适配
+
+# 0810React-GoodsLive-City-路由配置
+
+# 0811React-GoodsLive-City-城市页面
+
+# 0812React-GoodsLive-City-CityRedux
+
+# 0813React-GoodsLive-City-城市适配
+
+# 0814React-GoodsLive-City-城市默认数据
+
+# 0815React-GoodsLive-Search-路由配置
+
+# 0816React-GoodsLive-Search-路由传递参数
+
+# 0817React-GoodsLive-Search-搜索数据
+
+# 0818React-GoodsLive-Search-视图适配
+
+# 0819React-GoodsLive-Search-再次搜索
+
+# 0820React-GoodsLive-Search-搜索完结
+
+# 0821React-GoodsLive-Details-路由配置
+
+# 0822React-GoodsLive-Details-详情页
+
+# 0823React-GoodsLive-Details-tab切换
+
+# 0824React-GoodsLive-Details-评论数据获取
+
+# 0825React-GoodsLive-Details-评论实现
+
+# 0826React-GoodsLive-Login-登陆实现
+
+# 0827React-GoodsLive-Login-收藏功能
+
+# 0828React-GoodsLive-ShopCar-购物车页面
+
+# 0829React-GoodsLive-ShopCar-购物车评价
+
+# 0830React-GoodsLive-Hook
+
+# 0901React 新特性 State Hook
+[现成的hook](https://github.com/rehooks/awesome-react-hooks)
+1. react hook 推荐写法是函数式组件
+2. useState用来代理类组件中的state和setState
+
+
+# 0902React 新特性 Effect Hook
+1. useEffect()用来代替class组件的生命周期函数
+	+ 相当于class组件中的三个生命周期
+```
+### 相当于componentDidMount
+useEffect(()=>{
+	表示只在组件挂载后执行一次
+}, [])
+
+### 相当于componentWillUnmount
+useEffect(()=>{
+	return ()=>{
+		返回一个函数，表示的是消除副作用即组件被卸载前所要执行的操作
+	}
+}, [])
+```
+2. useEffect()第二个参数的解读
+	+ []  相当于生命周期函数 componentDidMount
+	+ 没有第二个参数即默认   相当于两个生命周期函数的叠加 
+		* componentDidMount
+		* componentDidUpdate
+	+ 第二个参数有值  只监听该值的变化，随之触发响应  相当于componentDidUpdate
+	+ return ()=>{}  相当于componentWillUnmount(组件卸载前)
+# 0903新特性 State Hook 和 Effect Hook实例应用
+1. useState
+```
+import React,{useState} from 'react'
+
+const useCounter = (initVal)=>{
+    const [count, setCount] = useState(initVal)
+    return {
+        count,
+        onClick: (e)=>{
+            setCount(count+1)
+        }
+    }
+}
+
+export default useCounter
+
+```
+# 0904React 新特性 自定义 Hook TodoList
+
+# 0905React 新特性 Hook Effect 性能优化
+
+# 0906React 新特性 网络请求
+
+# 0907React 新特性 React Hook useEffect 实例
+
+# 0908React 新特性 React Hook 规则
+1. 只能在最顶层调用hook，嵌套循环条件判断可以在hook中进行
+[官方说明](https://reactjs.bootcss.com/docs/hooks-rules.html)
+
+# 0909React 新特性 useEffect 中的 componentWillUnmount (副作用)
+
+# 0910React 新特性 React.memo
+1. 性能优化(对数据不发生变化的组件作优化)
+	+ 可以使用React.PureComponent浅比较的形式(class组件中)
+	+ 也可以使用componentWillUpdate生命周期进行判断(class组件中)
+	+ 使用高阶组件React.memo(xxx)---(函数组件中)
+
+# 0911React 新特性 useCallback优化
+1. 根据第二个参数的条件判断是否执行第一个参数
+	+ 第一个参数第一次会执行一次，从第二次开始就需要根据第二个参数作判断了
+		* 第一次会执行一次，可以看作是第二个参数从无到有的变化
+		* 第二个参数发生变化则执行，反之不执行
+```
+import React,{ useCallback, useState } from "react"
+
+
+
+const UseCbDemo = ()=>{
+    const [count, setCount]= useState(0)
+    const [count1, setCount1]= useState(0)
+    return(
+        <div>
+            <p>Child:{count}</p>
+            <button onClick={()=>{setCount(count+1)}}>click me</button>
+            <p>Child1:{count1}</p>
+            <button onClick={useCallback(()=>{setCount1(count1+1)}, [count])}>click me</button>
+        </div>
+    )
+}
+
+export default UseCbDemo
+
+
+```
+# 0912React 新特性 useReducer
+1. 类比redux中的reducer---> useState 的替代方案
+```
+import React,{ useReducer, useState } from "react"
+
+const initState = {
+    count: 0
+}
+const reducer = (state, action)=>{
+    switch (action.type) {
+        case 'increment':
+            
+            return {
+                count: state.count+1
+            }
+        case 'decrement':
+            return {
+                count: state.count-1
+            }
+        default:
+            return state
+    }
+}
+
+
+const UseReducerDemo = ()=>{
+    const [state, dispatch] = useReducer(reducer, initState)
+    
+    return(
+        <div>
+            <p>Child:{state.count}</p>
+            <button onClick={()=>{dispatch({type:'increment'})}}>+</button>
+            <button onClick={()=>{dispatch({type:'decrement'})}}>-</button>
+        </div>
+    )
+}
+
+export default UseReducerDemo
+
+
+```
+
+# 0913React 新特性 useContext
+1. 使用上下文进行参数传递(参数名必须是value)
+```
+### Parent.jsx
+import React,{useContext, useState} from 'react'
+import Child from './Child'
+
+export const MyContext = React.createContext()
+
+
+const Parent = ()=>{
+    const [count, setCount] = useState(0)
+    return(
+        <div>
+            <MyContext.Provider value={count}>
+                <Child/>
+            </MyContext.Provider>
+            <button onClick={()=>{setCount(count+1)}}>click</button>
+        </div>
+    )
+}
+
+export default Parent
+
+
+
+### Child.jsx
+import React, {useContext} from 'react'
+import {MyContext} from  './Parent'
+
+const Child = ()=>{
+    return(
+        <div>
+            Child: {useContext(MyContext)}
+        </div>
+    )
+}
+
+export default Child
+```
+
+# 0914React 新特性 contextType
+1. 对useContext的扩展--(参数名必须是value)
+```
+
+import React, { Component } from 'react'
+const MyContext = React.createContext()
+
+class Middle extends Component {
+    render() {
+        return (
+            <div>
+                <Bootom/>
+            </div>
+        )
+    }
+}
+
+// ### 不使用contextType
+// class Bootom extends Component {
+//     render() {
+//         return (
+//             <div>
+//                 <MyContext.Consumer>
+//                     {
+//                         color=><span>{color}</span>
+//                     }
+//                 </MyContext.Consumer>
+//             </div>
+//         )
+//     }
+// }
+
+// ### 使用contextType
+class Bootom extends Component {
+    static contextType = MyContext
+    
+    render() {
+        console.log('context-->', this.context);
+        
+        return (
+            <div>
+                <span>{this.context}</span>
+            </div>
+        )
+    }
+}
+
+export class ContextTypeDemo extends Component {
+    render() {
+        return (
+            <div>
+                <MyContext.Provider value='red'>
+                    <Middle/>
+                </MyContext.Provider>
+            </div>
+        )
+    }
+}
+
+export default ContextTypeDemo
+
+```
+# 0915React state深入理解
+1. class组件中的setState
+	+ 单纯的setState()是异步执行的
+	+ 当出现多个setState时,会先合并所有的异步操作
+	+ 执行完毕异步操作之后，才会执行异步操作中被传入的回调函数
+```
+import React, { Component } from 'react'
+
+export class SetStateDemo extends Component {
+    constructor(props){
+        super(props)
+        this.state = {
+            count: 0
+        }
+    }
+    componentDidMount(){
+        // this.setState({
+        //     count: this.state.count+1
+        // })
+        // this.setState({
+        //     count: this.state.count+1
+        // })
+        // this.setState({
+        //     count: this.state.count+1
+        // })
+        this.setState({
+            count: this.state.count+1
+        }, ()=>{
+            console.log('回调函数',this.state.count);
+            
+        })
+        this.setState((prevState, props)=>{
+            return{
+                count: prevState.count+1
+            }
+        })
+        this.setState((prevState, props)=>{
+            return{
+                count: prevState.count+1
+            }
+        })
+        console.log('this.state.count', this.state.count);
+    }
+    render() {
+        const {count} = this.state
+        return (
+            <div>
+                {count}
+            </div>
+        )
+    }
+}
+
+export default SetStateDemo
+
+```
+
+# 1001dva介绍与环境搭建
+[官方网站](https://dvajs.com/)
+1. 安装dva脚手架
+	+ cnpm install dva-cli -g
+2. 创建dva应用
+	+ [快速上手](https://dvajs.com/guide/getting-started.html)
+# 1002dva中引入antd
+1. npm install antd babel-plugin-import --save
+2. 编辑 .webpackrc，使 babel-plugin-import 插件生效
+```
+{
+	"extraBabelPlugins": [
+	["import", { "libraryName": "antd", "libraryDirectory": "es", "style": "css" }]
+	]
+}
+```
+
+
+
+
+
+# 1003dva路由配置
+1. 切换 history 为 browserHistory
+	+ cnpm install --save history
+	+ 然后修改入口文件
+```
+import createHistory from 'history/createBrowserHistory';
+const app = dva({
+  history: createHistory(),
+});
+```
+
+# 1004dva了解路由原理
+1. 锚点形式  #
+2. h5 history api 
+
+# 1005dva编写UI Component组件
+```
+import React, { Component } from 'react'
+
+export class Product extends Component {
+    render() {
+        return (
+            <div>
+                商品名称:{this.props.title}
+            </div>
+        )
+    }
+}
+
+export default Product
+
+```
+# 1006dva Model创建
+1. Model就是对单纯redux中的action+reducer的封装
+```
+### models/Product.js
+
+export default {
+
+    namespace: 'product',
+
+    state: {
+        productList: [
+            {
+                name: '玉米'
+            },
+            {
+                name: '玉米'
+            },
+        ]
+    },
+
+    reducers: {
+        update(state, action) {
+            const newProductList = [...state.productList]
+            newProductList.push(action.payload)
+            return { ...state, ['productList']: newProductList };
+        },
+    },
+
+};
+
+### UI-Component  Product.jsx
+import React, { Component } from 'react'
+
+
+export class Product extends Component {
+    updateProductList = ()=>{
+        const { dispatch} = this.props
+        dispatch({
+            type:'product/update',
+            payload: {name:'黄瓜'}
+        })
+    }
+    render() {
+        console.log(this.props);
+        const {product, title } = this.props
+        return (
+            <div>
+                商品名称:{title}
+                <ul>
+                    {
+                        product.productList.map((ele, index) => {
+                            return <li key={index}>{ele.name}</li>
+                        })
+                    }
+                </ul>
+                <button onClick={this.updateProductList}>更新橱窗商品</button>
+            </div>
+        )
+    }
+}
+
+
+
+
+
+export default Product
+
+
+### routes/ProductPage/ProductPage.jsx
+import React, { Component } from 'react'
+import Product from '../../components/ProductPage/Product'
+import {connect} from 'dva'
+
+
+export class ProductPage extends Component {
+    
+    render() {
+        return (
+            <div>
+                <Product title='开始卖东西' {...this.props} />
+            </div>
+        )
+    }
+}
+const  mapStateToProps = (state) => ({
+    product: state.product
+})
+export default connect(mapStateToProps)(ProductPage)
+
+
+```
+
+# 1007dva路由跳转
+1. 四种跳转方式
+	+ 使用高阶函数 withRouter  from 'dva/router'
+	+ 使用dva封装的Link  from 'dva/router'
+	+ 使用dva封装的routerRedux  from 'dva/router'  这个是action，需要使用dispatch执行
+	+ 使用 history.push('/')
+```
+import React, { Component } from 'react'
+import {Link, withRouter, routerRedux} from 'dva/router'
+
+
+export class Product extends Component {
+    updateProductList = ()=>{
+        const { dispatch} = this.props
+        dispatch({
+            type:'product/update',
+            payload: {name:'黄瓜'}
+        })
+    }
+    gotoHomeByHistory = ()=>{
+        this.props.history.push('/')
+    }
+    gotoHomeByRouterRedux = ()=>{
+        const { dispatch} = this.props
+        dispatch(routerRedux.push('/'))
+    }
+    
+    render() {
+        console.log(this.props);
+        const {product, title } = this.props
+        return (
+            <div>
+                商品名称:{title}
+                <ul>
+                    {
+                        product.productList.map((ele, index) => {
+                            return <li key={index}>{ele.name}</li>
+                        })
+                    }
+                </ul>
+                <button onClick={this.updateProductList}>更新橱窗商品</button>
+                <button onClick={this.gotoHomeByHistory}>去首页-history</button>
+                <button onClick={this.gotoHomeByRouterRedux}>去首页-routerRedux</button>
+                <button onClick={this.gotoHomeByHistory}>去首页-withRouter</button>
+                <Link to='/'>去首页-Link</Link>
+            </div>
+        )
+    }
+}
+export default Product
+
+```
+# 1008dva Model异步处理
+[详解](https://www.cnblogs.com/wangfupeng1988/p/6532713.html)
+1. Generator 生成器的使用(类似Python中的Gennerator)
+	+ yield  返回并暂停
+		1. 可以是
+	+ next   启动并开始
+	+ yield* 执行后续的generator函数
+2. 使用thunk库    cnpm i thunkify --save   
+	+ 我们经过对传统的异步操作函数进行封装，得到一个只有一个参数的函数，而且这个参数是一个callback函数，那这就是一个thunk函数
+3. 使用co库       cnpm i co --save 
+```
+// 定义 Generator
+const readFileThunk = thunkify(fs.readFile)
+const gen = function* () {
+    const r1 = yield readFileThunk('data1.json')
+    console.log(r1.toString())
+    const r2 = yield readFileThunk('data2.json')
+    console.log(r2.toString())
+}
+const c = co(gen)
+
+c.then(data => {
+    console.log('结束')
+})
+```
+4. 如果使用co来处理Generator的话，其实yield后面可以跟thunk函数，也可以跟Promise对象
+```
+const readFilePromise = Q.denodeify(fs.readFile)
+
+const gen = function* () {
+    const r1 = yield readFilePromise('data1.json')
+    console.log(r1.toString())
+    const r2 = yield readFilePromise('data2.json')
+    console.log(r2.toString())
+}
+
+co(gen)
+```
+5. 使用异步操作来实现model中的state变化
+```
+effects:{
+	*updateAsync({payload}, {call, put}){
+		yield put({
+			type: 'update',
+			payload
+		})
+	}
+},
+```
+# 1009dva Mock数据处理
+1. 使用dva自带的mock处理
+```
+### mock/product.js
+module.exports = {
+    "GET /api/product": (req,res)=>{
+        res.send({
+            name:'高粱'
+        })
+    }
+}
+
+### .roadhogrc.mock.js
+
+export default {
+    ...require('./mock/product')
+};
+
+
+### services/example.js
+import request from '../utils/request';
+
+export function query() {
+  return request('/api/users');
+}
+
+export function getProduct() {
+  return request('/api/product');
+}
+
+
+### model/product.js
+*updateHttp({payload}, {call, put}){
+	const result = yield call(api.getProduct)
+	const data = result.data
+	if(data){
+		yield put({
+			type: 'update',
+			payload:data
+		})
+	}
+}
+	
+### ProductPage/Product.jsx
+updateProductListHttp = ()=>{
+	const { dispatch} = this.props
+	dispatch({
+		type:'product/updateHttp',
+		payload: {}
+	})
+}
+```
+2. 引入mockjs库 cnpm install --save mockjs
+	+ [mockjs](http://mockjs.com/)
+# 1010dva 网络请求
+1. call(请求api, params)   params是请求所需的参数列表
+```
+### model/product.js
+*updateHttp({payload}, {call, put}){
+	const result = yield call(api.getProduct)
+	const data = result.data
+	if(data){
+		yield put({
+			type: 'update',
+			payload:data
+		})
+	}
+}
+```
+# 1011dva Model API
+1. subscriptions  订阅消息
+[](https://dvajs.com/api/#subscriptions)
+```
+subscriptions: {
+	setup({ dispatch, history }) {  // eslint-disable-line
+		window.onresize = ()=>{
+			dispatch({
+				type: 'update',
+				payload:{name:'牛奶'}
+			})
+		}
+	},
+	setupHistory({ dispatch, history }){
+		history.listen(location=>{
+			console.log(location);
+			
+		})
+	}
+  },
+```
+# 1012dva redux-actions
+1. 安装 cnpm install --save redux-actions
+[redux-actions](https://github.com/redux-utilities/redux-actions)
+```
+### actions/product.js
+import {createAction} from 'redux-actions'
+
+export const productList = createAction('product/update')
+export const productListAsync = createAction('product/updateAsync')
+export const productListHttp = createAction('product/updateHttp')
+
+
+### ProductPage/Product.jsx
+import {productList} from '../../actions/product'
+updateProductList = ()=>{
+	const { dispatch} = this.props
+	dispatch(productList({name:'黄瓜 createAction'}))
+}
+
+```
+# 1101项目创建(Typescript+react)
+1. 脚手架: cnpm install -g create-react-app
+2. 创建项目: npx create-react-app my-app --template typescript
+3. 开发工具使用VSCODE
+	+ 安装扩展
+		* 支持中文
+		* ES7 React语法提示
+		* TypeScript Importer
+
+# 1102React引入
+
+# 1103React组件声明
+
+# 1104数据传递
+
+# 1105状态管理
+
+# 1106事件处理
+
+# 1107条件与列表渲染
+
+# 1108引入第三方UI
+
+# 1109路由
+
+# 1110Redux
+
+# 1201TypeScript + Node
+
+# 1202TypeScript + Node
+
+# 1203TypeScript + Node
+
+# 1204TypeScript + Node
+
+# 1205TypeScript + Node
+
+# 1206TypeScript + Node
+
+# 1207TypeScript + Node
+
+# 1301UmiJS介绍
+[github源码](https://github.com/umijs/umi)
+[官方文档V3](https://umijs.org/zh)
+[官方文档V2](https://v2.umijs.org/zh)
+[查看github源码目录的工具](https://github.com/ovity/octotree)
+
+# 1302UmiJS快速上手
+[](https://umijs.org/zh-CN/docs/getting-started)
+1. npm i yarn tyarn -g
+2. tyarn -v
+3. 通过官方工具创建项目
+	+ tyarn global add umi
+
+# 1303UmiJS脚手架create umi
+1. tyarn create umi
+2. cnpm install 安装相关依赖
+
+# 1304UmiJS 路由约定与配置
+[约定式路由](https://umijs.org/zh-CN/docs/convention-routing)
+1. 除配置式路由外，Umi 也支持约定式路由
+	+ 约定式路由也叫文件路由，就是不需要手写配置
+	+ 文件系统即路由，通过目录和文件及其命名分析出路由配置
+	+ 如果没有 routes 配置，Umi 会进入约定式路由模式，然后分析 src/pages 目录拿到路由配置
+2. 使用yarn create umi (触发约定式路由配置)
+	+ 创建ant-pro项目
+		1. 注释掉config/config.js文件中的routes配置信息
+	+ 创建 app 项目
+		1. 注释掉项目根目录下 .umirc.js文件中的routes配置信息
+3. 动态路由的使用
+```
+### pages/news/$id.jsx
+import React, { Component } from 'react'
+
+export class $id extends Component {
+    componentDidMount(){
+        console.log(this.props);
+        
+    }
+    render() {
+        const {id} = this.props.match.params
+        return (
+            <div>
+                News: {id}
+            </div>
+        )
+    }
+}
+
+export default $id
+
+
+### 跳转的实现
+
+import router from 'umi/router';
+import Link from 'umi/link'
+goBack = ()=>{
+	router.goBack()
+}
+<Link to='/'>回到首页</Link>
+```
+# 1305UmiJS结合Dva
+[](https://v2.umijs.org/zh/guide/with-dva.html#%E7%89%B9%E6%80%A7)
+1. 不存在就安装  yarn add umi-plugin-react  
+2. 然后在 .umirc.js 里配置插件：
+```
+export default {
+  plugins: [
+    [
+      'umi-plugin-react',
+      {
+        dva: true,
+      },
+    ]
+  ],
+};
+```
+3. 在 src 目录下新建 app.js
+```
+export const dva = {
+  config: {
+    onError(e) {
+      e.preventDefault();
+      console.error(e.message);
+    },
+  },
+  plugins: [
+    require('dva-logger')(),
+  ],
+};
+```
+# 1306UmiJS结合Dva配置immer
+1. redux的三大原则之一就是不能直接修改state
+	+ 使用dva-immer后就可以直接对state进行修改了
+2. 开启dva-immer
+```
+export default {
+  plugins: [
+    [
+      'umi-plugin-react',
+      {
+        dva: {
+          immer: true
+        }
+      }
+    ],
+  ],
+};
+```
+3. 更改.umirc.js配置文件后，如果未触发即时生效，记得重启服务
+
+# 1307UmiJS结合Dva按需加载原理
+
+1. 使用dynamic实现按需加载
+2. 配置.umirc.js  开启按需加载
+```
+dynamicImport: {
+	webpackChunkName: true,
+	loadingComponent: './components/Loading/DefaultLoading.jsx',
+	level: 1                   //表示对第一层路由进行按需加载
+},
+```
+3. 路由级按需加载
+	+ 就是访问某个路由时才加载其相应的文件
+	+ 并非一次性加载全部文件到浏览器
+4. react官方文档中也有对按需加载的说明(即代码分割)
+	+ [](https://zh-hans.reactjs.org/docs/code-splitting.html)
+# 1308UmiJS动态加载相关配置
+[](https://v2.umijs.org/zh/plugin/umi-plugin-react.html#dynamicimport)
+# 1309UmiJS动态加载源码深入解析
+1. 查看umi的源码，可以发现
+	+ 按需加载也是使用的其他库，umi只是封装了一层
+# 1310UmiJS插件配置其他
+1. 开启antd-ui库的支持
+```
+export default {
+  plugins: [
+    [
+      'umi-plugin-react',
+      {
+        antd: true
+      }
+    ],
+  ],
+};
+```
+
+# 1311UmiJS插件语言设置
+[](https://v2.umijs.org/zh/plugin/umi-plugin-react.html#locale)
+```
+locale:{
+	default: 'zh-CN', // default zh-CN, if baseSeparator set _，default zh_CN
+	baseNavigator: true, // default true, when it is true, will use navigator.language overwrite default
+	antd: true, // use antd, default is true
+	baseSeparator: '-', // the separator between lang and language, default -
+  },
+```
+# 1312UmiJS插件Dll二次启动提速
+[](https://v2.umijs.org/zh/plugin/umi-plugin-react.html#dll)
+1. 二次启动提速指的是在开发模式下使用webpack打包可以提升速度
+```
+dll: {
+	
+}
+```
+# 1313UmiJS与Webpack相关配置
+1. 在webpack中添加额外的配置
+	+ 配置跨域
+	```
+	proxy: {
+		"/api": {
+		  // /v1/restserver/ting?method=baidu.ting.billboard.billList&type=1&size=10&offset=0
+		  "target": "http://tingapi.ting.baidu.com",
+		  "changeOrigin": true,
+		  "pathRewrite": { "^/api" : "" }
+		}
+	}
+	```
 
 
 
