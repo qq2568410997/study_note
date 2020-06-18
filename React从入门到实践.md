@@ -1,6 +1,8 @@
 # 引言
 ## 查看github源代码所必备的插件
 [五大必备插件](http://www.cnplugins.com/zhuanti/266406.html)
+## 解决vscode对JavaScript的语法验证
+1. [禁用vscode使用ts对js进行语法校验](https://www.jianshu.com/p/1b31b54ab7c0)
 # 0101React 学习前期准备
 1. 所需知识栈
 	+ JavaScript
@@ -3360,6 +3362,8 @@ updateProductList = ()=>{
 # 1303UmiJS脚手架create umi
 1. tyarn create umi
 2. cnpm install 安装相关依赖
+	+ 这里最好使用 yarn 安装依赖
+	+ 使用国内源tyarn也有可能出现问题
 
 # 1304UmiJS 路由约定与配置
 [约定式路由](https://umijs.org/zh-CN/docs/convention-routing)
